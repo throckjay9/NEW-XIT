@@ -1,108 +1,158 @@
--- FFH4X DEV PANEL - Para testes no mapa GARENA FREE FIRE MAX🏆
--- Feito para uso seguro e local
-
+-- FFH4X DEV PANEL - GUI funcional e completo
+local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local frame = script.Parent:WaitForChild("MainFrame")
-
--- Inicial
-frame.Visible = false
-local dragging = false
-local dragToggle = false
 local camera = workspace.CurrentCamera
 
--- Abrir/fechar GUI com Q
+-- Criar GUI
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "FFH4X_GUI"
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", screenGui)
+frame.Name = "MainFrame"
+frame.Size = UDim2.new(0, 300, 0, 400)
+frame.Position = UDim2.new(0.5, -150, 0.5, -200)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Visible = false
+
+-- Drag label
+local dragLabel = Instance.new("TextLabel", frame)
+dragLabel.Name = "DragLabel"
+dragLabel.Size = UDim2.new(1, 0, 0, 30)
+dragLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+dragLabel.Text = "FFH4X DEV PANEL"
+dragLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+dragLabel.Font = Enum.Font.GothamBold
+dragLabel.TextSize = 16
+
+-- Botão Generator
+local function createButton(name, y, text)
+	local btn = Instance.new("TextButton", frame)
+	btn.Name = name
+	btn.Size = UDim2.new(1, -20, 0, 30)
+	btn.Position = UDim2.new(0, 10, 0, 40 + (y * 35))
+	btn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+	btn.TextColor3 = Color3.fromRGB(0, 255, 0)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.Text = text
+	return btn
+end
+
+-- Criar botões
+local buttons = {
+	{"AimbotButton", "Aimbot"},
+	{"TeleportButton", "Teleport"},
+	{"SpeedButton", "Speed"},
+	{"JumpButton", "Jump"},
+	{"ESPButton", "ESP"},
+	{"FlyButton", "Fly"},
+	{"GravityButton", "Gravity"},
+	{"HealthButton", "Heal"}
+}
+
+for i, b in ipairs(buttons) do
+	createButton(b[1], i - 1, b[2])
+end
+
+-- Teclas
+local dragToggle = false
 UIS.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode == Enum.KeyCode.Q then
 		frame.Visible = not frame.Visible
-	end
-end)
-
--- Ativar/desativar arrastar com F
-UIS.InputBegan:Connect(function(input)
-	if input.KeyCode == Enum.KeyCode.F then
+	elseif input.KeyCode == Enum.KeyCode.E then
 		dragToggle = not dragToggle
 	end
 end)
 
--- Drag GUI
-local dragArea = frame:WaitForChild("DragLabel")
-local function dragGUI(gui)
-	local dragInput, mousePos, startPos
+-- Drag funcional
+local dragging = false
+local dragInput, dragStart, startPos
 
-	gui.InputBegan:Connect(function(input)
-		if dragToggle and input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			mousePos = input.Position
-			startPos = gui.Position
-
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-
-	gui.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = input.Position - mousePos
-			gui.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
+local function update(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
 end
 
-dragGUI(frame)
+dragLabel.InputBegan:Connect(function(input)
+	if dragToggle and input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
 
--- Função: Aimbot simulado (olhar para cabeça do inimigo mais próximo)
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+dragLabel.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+-- Funções dos botões
+local function getHumanoid()
+	return player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+end
+
+local function getRoot()
+	return player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+end
+
 local function aimbot()
-	local closestEnemy, closestDist = nil, math.huge
-	for _, plr in pairs(Players:GetPlayers()) do
+	local closest, dist = nil, math.huge
+	for _, plr in pairs(game.Players:GetPlayers()) do
 		if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
 			local head = plr.Character.Head
-			local distance = (head.Position - player.Character.Head.Position).Magnitude
-			if distance < closestDist then
-				closestDist = distance
-				closestEnemy = head
+			local d = (head.Position - player.Character.Head.Position).Magnitude
+			if d < dist then
+				dist = d
+				closest = head
 			end
 		end
 	end
-	if closestEnemy then
-		camera.CFrame = CFrame.new(camera.CFrame.Position, closestEnemy.Position)
+	if closest then
+		camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
 	end
 end
 
--- Teleporte
 local function teleport()
-	local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local hrp = getRoot()
 	if hrp then
-		hrp.CFrame = CFrame.new(150, 15, 150) -- ajuste conforme o mapa
+		hrp.CFrame = CFrame.new(150, 15, 150)
 	end
 end
 
--- Velocidade
 local function speed()
-	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	local hum = getHumanoid()
 	if hum then hum.WalkSpeed = 100 end
 end
 
--- Pulo
 local function jump()
-	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	local hum = getHumanoid()
 	if hum then hum.JumpPower = 150 end
 end
 
--- ESP
 local function esp()
-	for _, plr in pairs(Players:GetPlayers()) do
+	for _, plr in pairs(game.Players:GetPlayers()) do
 		if plr ~= player and plr.Character and not plr.Character:FindFirstChild("FFH4X_ESP") then
 			local hl = Instance.new("Highlight")
 			hl.Name = "FFH4X_ESP"
@@ -113,53 +163,50 @@ local function esp()
 	end
 end
 
--- Fly
 local flying = false
 local bv
 
-local function toggleFly()
-	local char = player.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+local function fly()
+	local root = getRoot()
+	if not root then return end
 	if not flying then
 		bv = Instance.new("BodyVelocity")
-		bv.Velocity = Vector3.zero
 		bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-		bv.Parent = char.HumanoidRootPart
+		bv.Velocity = Vector3.zero
+		bv.Parent = root
 		flying = true
 	else
-		flying = false
 		if bv then bv:Destroy() end
+		flying = false
 	end
 end
 
 RS.RenderStepped:Connect(function()
-	if flying then
-		local direction = Vector3.zero
-		if UIS:IsKeyDown(Enum.KeyCode.W) then direction += camera.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then direction -= camera.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.new(0,1,0) end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then direction -= Vector3.new(0,1,0) end
-		if bv then bv.Velocity = direction * 50 end
+	if flying and bv then
+		local dir = Vector3.zero
+		if UIS:IsKeyDown(Enum.KeyCode.W) then dir += camera.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then dir -= camera.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0,1,0) end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir -= Vector3.new(0,1,0) end
+		bv.Velocity = dir * 50
 	end
 end)
 
--- Gravidade local
 local function gravity()
 	workspace.Gravity = 50
 end
 
--- Cura
 local function heal()
-	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	local hum = getHumanoid()
 	if hum then hum.Health = hum.MaxHealth end
 end
 
 -- Conectar botões
-frame:WaitForChild("AimbotButton").MouseButton1Click:Connect(aimbot)
-frame:WaitForChild("TeleportButton").MouseButton1Click:Connect(teleport)
-frame:WaitForChild("SpeedButton").MouseButton1Click:Connect(speed)
-frame:WaitForChild("JumpButton").MouseButton1Click:Connect(jump)
-frame:WaitForChild("ESPButton").MouseButton1Click:Connect(esp)
-frame:WaitForChild("FlyButton").MouseButton1Click:Connect(toggleFly)
-frame:WaitForChild("GravityButton").MouseButton1Click:Connect(gravity)
-frame:WaitForChild("HealthButton").MouseButton1Click:Connect(heal)
+frame.AimbotButton.MouseButton1Click:Connect(aimbot)
+frame.TeleportButton.MouseButton1Click:Connect(teleport)
+frame.SpeedButton.MouseButton1Click:Connect(speed)
+frame.JumpButton.MouseButton1Click:Connect(jump)
+frame.ESPButton.MouseButton1Click:Connect(esp)
+frame.FlyButton.MouseButton1Click:Connect(fly)
+frame.GravityButton.MouseButton1Click:Connect(gravity)
+frame.HealthButton.MouseButton1Click:Connect(heal)
