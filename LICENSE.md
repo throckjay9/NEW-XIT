@@ -1,76 +1,75 @@
--- FFH4X DEV PANEL - GUI funcional e completo
+-- FFH4X DEV PANEL - GUI Arrastável Completo
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
 local camera = workspace.CurrentCamera
 
 -- Criar GUI
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "FFH4X_GUI"
-screenGui.ResetOnSpawn = false
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "FFH4X_GUI"
+gui.ResetOnSpawn = false
 
-local frame = Instance.new("Frame", screenGui)
+-- Painel principal
+local frame = Instance.new("Frame", gui)
 frame.Name = "MainFrame"
-frame.Size = UDim2.new(0, 300, 0, 400)
-frame.Position = UDim2.new(0.5, -150, 0.5, -200)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Size = UDim2.new(0, 280, 0, 400)
+frame.Position = UDim2.new(0.5, -140, 0.5, -200)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Visible = false
 
--- Drag label
-local dragLabel = Instance.new("TextLabel", frame)
-dragLabel.Name = "DragLabel"
-dragLabel.Size = UDim2.new(1, 0, 0, 30)
-dragLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-dragLabel.Text = "FFH4X DEV PANEL"
-dragLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
-dragLabel.Font = Enum.Font.GothamBold
-dragLabel.TextSize = 16
+-- Cabeçalho (barra de arraste)
+local dragHeader = Instance.new("TextLabel", frame)
+dragHeader.Name = "DragLabel"
+dragHeader.Size = UDim2.new(1, 0, 0, 30)
+dragHeader.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+dragHeader.Text = "FFH4X DEV PANEL"
+dragHeader.TextColor3 = Color3.fromRGB(255, 255, 0)
+dragHeader.Font = Enum.Font.GothamBold
+dragHeader.TextSize = 16
 
--- Botão Generator
-local function createButton(name, y, text)
+-- Botão criador
+local function createButton(text, index)
 	local btn = Instance.new("TextButton", frame)
-	btn.Name = name
+	btn.Name = text .. "Button"
+	btn.Text = text
 	btn.Size = UDim2.new(1, -20, 0, 30)
-	btn.Position = UDim2.new(0, 10, 0, 40 + (y * 35))
+	btn.Position = UDim2.new(0, 10, 0, 40 + ((index - 1) * 35))
 	btn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 	btn.TextColor3 = Color3.fromRGB(0, 255, 0)
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 14
-	btn.Text = text
 	return btn
 end
 
 -- Criar botões
-local buttons = {
-	{"AimbotButton", "Aimbot"},
-	{"TeleportButton", "Teleport"},
-	{"SpeedButton", "Speed"},
-	{"JumpButton", "Jump"},
-	{"ESPButton", "ESP"},
-	{"FlyButton", "Fly"},
-	{"GravityButton", "Gravity"},
-	{"HealthButton", "Heal"}
+local buttonNames = {
+	"Aimbot", "Teleport", "Speed", "Jump", "ESP", "Fly", "Gravity", "Heal"
 }
 
-for i, b in ipairs(buttons) do
-	createButton(b[1], i - 1, b[2])
+local buttons = {}
+for i, name in ipairs(buttonNames) do
+	buttons[name] = createButton(name, i)
 end
 
--- Teclas
-local dragToggle = false
+-- Abrir/fechar GUI com Q
 UIS.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode == Enum.KeyCode.Q then
 		frame.Visible = not frame.Visible
-	elseif input.KeyCode == Enum.KeyCode.E then
+	end
+end)
+
+-- Ativar modo arrastar com tecla E
+local dragToggle = false
+UIS.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.E then
 		dragToggle = not dragToggle
 	end
 end)
 
--- Drag funcional
-local dragging = false
-local dragInput, dragStart, startPos
+-- Lógica de arrastar
+local dragging, dragInput, dragStart, startPos
 
 local function update(input)
 	local delta = input.Position - dragStart
@@ -82,7 +81,7 @@ local function update(input)
 	)
 end
 
-dragLabel.InputBegan:Connect(function(input)
+dragHeader.InputBegan:Connect(function(input)
 	if dragToggle and input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
 		dragStart = input.Position
@@ -96,7 +95,7 @@ dragLabel.InputBegan:Connect(function(input)
 	end
 end)
 
-dragLabel.InputChanged:Connect(function(input)
+dragHeader.InputChanged:Connect(function(input)
 	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 		dragInput = input
 	end
@@ -202,11 +201,11 @@ local function heal()
 end
 
 -- Conectar botões
-frame.AimbotButton.MouseButton1Click:Connect(aimbot)
-frame.TeleportButton.MouseButton1Click:Connect(teleport)
-frame.SpeedButton.MouseButton1Click:Connect(speed)
-frame.JumpButton.MouseButton1Click:Connect(jump)
-frame.ESPButton.MouseButton1Click:Connect(esp)
-frame.FlyButton.MouseButton1Click:Connect(fly)
-frame.GravityButton.MouseButton1Click:Connect(gravity)
-frame.HealthButton.MouseButton1Click:Connect(heal)
+buttons.Aimbot.MouseButton1Click:Connect(aimbot)
+buttons.Teleport.MouseButton1Click:Connect(teleport)
+buttons.Speed.MouseButton1Click:Connect(speed)
+buttons.Jump.MouseButton1Click:Connect(jump)
+buttons.ESP.MouseButton1Click:Connect(esp)
+buttons.Fly.MouseButton1Click:Connect(fly)
+buttons.Gravity.MouseButton1Click:Connect(gravity)
+buttons.Heal.MouseButton1Click:Connect(heal)
